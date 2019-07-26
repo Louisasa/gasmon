@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GasMon {
@@ -49,16 +50,31 @@ public class GasMon {
         DateTime dateTime = new DateTime();
         Period period = new Period().withMinutes(1);
 
-        Receiver receiver = new Receiver();
+        EventHandler eventHandler = new EventHandler();
 
         while (dateTime.plus(period).isAfterNow()) {
             List<Message> messages = sqs.receiveMessage(new ReceiveMessageRequest(url)).getMessages();
             if (messages.size() > 0) {
-                receiver.jsonIntoJava(messages.get(0).getBody());
+                String messageResult = eventHandler.checkForEnglish(messages.get(0).getBody());
+                if (messageResult != null) {
+                    MessageId messageId = eventHandler.jsonIntoMessageId(messageResult);
+                    Event event = eventHandler.jsonIntoEvent(messageId.toString());
+                    eventHandler.checkForDuplicates(event);
+                }
 
             }
             if (new DateTime().isAfter(dateTime.plusMinutes(10))) {
-                receiver.trashOldEvents();
+                DateTime tenMinsAgo = new DateTime().minusMinutes(10);
+                ArrayList<Event> eventsToRemove = eventHandler.findOldEvents(tenMinsAgo);
+                eventHandler.trashOldEvents(eventsToRemove);
+            }
+
+            if (new DateTime().isAfter(dateTime.plusMinutes(5))) {
+                DateTime timeRN = new DateTime();
+                ArrayList<Event> eventsFiveMinsAgo = eventHandler.findOldEvents(timeRN.minusMinutes(5));
+                ArrayList<Event> eventsSixMinsAgo = eventHandler.findOldEvents(timeRN.minusMinutes(6));
+                int averagedEvents = eventHandler.averageEvents(eventsSixMinsAgo, eventsFiveMinsAgo);
+                eventHandler.writeToFile("Average number of events at time" + timeRN.minusMinutes(5) + ": " + averagedEvents);
             }
 
             //todo: need to delete after read

@@ -8,6 +8,7 @@ import com.amazonaws.services.sns.util.Topics;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.google.gson.Gson;
@@ -48,7 +49,7 @@ public class GasMon {
 
     private static void receiveEvents(AmazonSQS sqs, String url) {
         DateTime dateTime = new DateTime();
-        Period period = new Period().withMinutes(1);
+        Period period = new Period().withMinutes(10);
 
         EventHandler eventHandler = new EventHandler();
 
@@ -76,8 +77,6 @@ public class GasMon {
                 int averagedEvents = eventHandler.averageEvents(eventsSixMinsAgo, eventsFiveMinsAgo);
                 eventHandler.writeToFile("Average number of events at time" + timeRN.minusMinutes(5) + ": " + averagedEvents);
             }
-
-            //todo: need to delete after read
         }
     }
 
@@ -99,10 +98,14 @@ public class GasMon {
 
         objContentToJava(s3);
 
-        String url = sqs.createQueue(new CreateQueueRequest("louQueue")).getQueueUrl();
+        String url = sqs.createQueue(new CreateQueueRequest("louQueue3")).getQueueUrl();
         Topics.subscribeQueue(sns, sqs, arn, url);
 
         receiveEvents(sqs, url);
+
+        System.out.println("cool fin");
+
+        sqs.deleteQueue(new DeleteQueueRequest(url));
 
 
 

@@ -60,8 +60,8 @@ public class EventHandler {
             Map.Entry pair = stringDateTimeEntry;
             Long arrivalTime = (Long) pair.getValue();
             if (timeAgo.isAfter(arrivalTime)) {
-                Event event = (Event) pair.getKey();
-                eventsToRemove.add(event);
+                String eventId = (String) pair.getKey();
+                eventsToRemove.add(events.get(eventId));
             }
         }
         return eventsToRemove;
@@ -70,8 +70,8 @@ public class EventHandler {
     public void trashOldEvents(ArrayList<Event> eventsToRemove) {
 
         for (Event event : eventsToRemove) {
-            events.remove(event);
-            arrivalTime.remove(event);
+            events.remove(event.eventId);
+            arrivalTime.remove(event.eventId);
         }
     }
 }

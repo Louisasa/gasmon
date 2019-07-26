@@ -45,6 +45,26 @@ public class GasMon {
 
     }
 
+    private static void receiveEvents(AmazonSQS sqs, String url) {
+        DateTime dateTime = new DateTime();
+        Period period = new Period().withMinutes(1);
+
+        Receiver receiver = new Receiver();
+
+        while (dateTime.plus(period).isAfterNow()) {
+            List<Message> messages = sqs.receiveMessage(new ReceiveMessageRequest(url)).getMessages();
+            if (messages.size() > 0) {
+                receiver.jsonIntoJava(messages.get(0).getBody());
+
+            }
+            if (new DateTime().isAfter(dateTime.plusMinutes(10))) {
+                receiver.trashOldEvents();
+            }
+
+            //todo: need to delete after read
+        }
+    }
+
     public static void main(String[] args) {
 
         final AmazonS3 s3 = AmazonS3ClientBuilder.standard()
@@ -63,21 +83,10 @@ public class GasMon {
 
         objContentToJava(s3);
 
-        String myQueueUrl = sqs.createQueue(new CreateQueueRequest("louQueue")).getQueueUrl();
-        Topics.subscribeQueue(sns, sqs, arn, myQueueUrl);
+        String url = sqs.createQueue(new CreateQueueRequest("louQueue")).getQueueUrl();
+        Topics.subscribeQueue(sns, sqs, arn, url);
 
-        DateTime dateTime = new DateTime();
-        Period period = new Period().withMinutes(1);
-
-        Receiver receiver = new Receiver();
-
-        while (dateTime.plus(period).isAfterNow()) {
-            List<Message> messages = sqs.receiveMessage(new ReceiveMessageRequest(myQueueUrl)).getMessages();
-            if (messages.size() > 0) {
-                receiver.jsonIntoJava(messages.get(0).getBody());
-
-            }
-        }
+        receiveEvents(sqs, url);
 
 
 

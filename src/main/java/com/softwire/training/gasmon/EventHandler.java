@@ -40,40 +40,7 @@ public class EventHandler {
         return message.contains(checkFor) ? message : null;
     }
 
-    public double averageEvents(ArrayList<Event> eventsSixMinsAgo, ArrayList<Event> eventsFiveMinsAgo) {
-        double total = 0;
-        for (Event event : eventsFiveMinsAgo) {
-            if (!eventsSixMinsAgo.contains(event)) {
-                total += event.value;
-            }
-        }
-        return total/(eventsFiveMinsAgo.size()-eventsSixMinsAgo.size());
-    }
-
-    public void addToAverageLocations(ArrayList<Event> eventsToAddToAverage) {
-        for (Event event : eventsToAddToAverage) {
-            if (this.locationAverages.contains(event.locationId)) {
-                ArrayList<Double> currentValues = this.locationAverages.get(event.locationId);
-                currentValues.add(event.value);
-                this.locationAverages.put(event.locationId, currentValues);
-            } else {
-                this.locationAverages.put(event.locationId, new ArrayList<Double>(){{ add(event.value);}});
-            }
-        }
-    }
-
-    public void averageLocation() {
-        for (Map.Entry<String, ArrayList<Double>> stringArrayListEntry : this.locationAverages.entrySet()) {
-            Map.Entry pair = stringArrayListEntry;
-            ArrayList<Double> averages = (ArrayList<Double>) pair.getValue();
-            double count = 0;
-            for (double value : averages) {
-                count += value;
-            }
-            writeToFile("Average for " + (String) pair.getKey() + ": " + count/averages.size());
-        }
-    }
-
+    @Inject
     public void writeToFile(String lineToBeWrittenToFile) {
         try(FileWriter fw = new FileWriter(averagedEventsFileName, true);
             BufferedWriter bw = new BufferedWriter(fw);

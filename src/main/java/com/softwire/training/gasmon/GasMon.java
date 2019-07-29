@@ -63,7 +63,7 @@ public class GasMon {
         DateTime dateTime = new DateTime();
         DateTime dateTimeForAveragedEvents = new DateTime();
         DateTime dateTimeForTrashingOldEvents = new DateTime();
-        Period period = new Period().withMinutes(12);
+        Period period = new Period().withMinutes(20);
 
         EventHandler eventHandler = new EventHandler();
 
@@ -129,16 +129,12 @@ public class GasMon {
                 .withRegion("eu-west-1")
                 .build();
 
-        //sqs.setEndpoint("sqs.eu-west-1.amazonaws.com");
-
         objContentToJava(s3);
 
-        final String url = sqs.createQueue(new CreateQueueRequest("louQueue")).getQueueUrl();
+        final String url = sqs.createQueue(new CreateQueueRequest("louQueue1")).getQueueUrl();
         Topics.subscribeQueue(sns, sqs, arn_2, url);
 
         receiveEvents(sqs, url);
-
-        System.out.println("cool fin");
 
         sqs.deleteQueue(new DeleteQueueRequest(url));
 
